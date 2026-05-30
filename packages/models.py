@@ -41,7 +41,7 @@ class PackageType(models.Model):
             (cls.OZEL_DERS, 'Özel Ders', 8, 'Birebir özel yüzme dersi paketi.'),
         ]
         for slug, name, count, desc in defaults:
-            cls.objects.get_or_create(slug=slug, defaults={
+            cls.objects.update_or_create(slug=slug, defaults={
                 'name': name, 'session_count': count, 'description': desc
             })
         # Aqua Fitness varsa pasife al

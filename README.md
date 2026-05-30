@@ -5,8 +5,8 @@ Django tabanlı yüzme kulübü üyelik ve randevu yönetim sistemi.
 ## Özellikler
 
 - Kullanıcı kayıt / giriş sistemi
-- 3 paket türü: Kursiyer (8), Özel Ders (12), Deneme Ders (1) seans
-- Admin paket atama 
+- 3 paket türü: Kursiyer (8), Özel Ders (8), Deneme Dersi (1) seans
+- Admin paket atama — nakit alındıktan sonra el ile
 - Randevu alındığında otomatik seans düşürme
 - Randevu iptalinde otomatik seans iadesi
 - Düşük seans uyarısı (≤2 kaldığında)

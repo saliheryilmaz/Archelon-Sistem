@@ -15,7 +15,7 @@ class PackageType(models.Model):
 
     DEFAULT_SESSIONS = {
         KURSIYER: 8,
-        OZEL_DERS: 12,
+        OZEL_DERS: 8,
         DENEME_DERSI: 1,
     }
 
@@ -38,7 +38,7 @@ class PackageType(models.Model):
         defaults = [
             (cls.DENEME_DERSI, 'Deneme Dersi', 1, 'Tek seferlik deneme dersi.'),
             (cls.KURSIYER, 'Kursiyer', 8, 'Temel yüzme eğitimi paketi.'),
-            (cls.OZEL_DERS, 'Özel Ders', 12, 'Birebir özel yüzme dersi paketi.'),
+            (cls.OZEL_DERS, 'Özel Ders', 8, 'Birebir özel yüzme dersi paketi.'),
         ]
         for slug, name, count, desc in defaults:
             cls.objects.get_or_create(slug=slug, defaults={

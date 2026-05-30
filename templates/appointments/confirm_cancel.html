@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Randevu İptal — Archeon{% endblock %}
+{% block topbar_title %}Randevu İptal{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div style="max-width:460px;margin:0 auto;">
+  <div class="card">
+    <div style="text-align:center;padding:8px 0 24px;">
+      <div style="width:60px;height:60px;background:var(--danger-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <div style="font-size:19px;font-weight:700;color:var(--gray-900);margin-bottom:6px;">Randevuyu iptal et</div>
+      <div style="font-size:14px;color:var(--gray-500);">Bu işlem geri alınamaz. Seans hakkınız iade edilecektir.</div>
+    </div>
+
+    <div class="detail-summary">
+      <div>
+        <div class="detail-field-label">Tarih</div>
+        <div class="detail-field-value">{{ appt.date|date:"d M Y" }}</div>
+      </div>
+      <div>
+        <div class="detail-field-label">Saat</div>
+        <div class="detail-field-value">{{ appt.start_time|time:"H:i" }} – {{ appt.end_time|time:"H:i" }}</div>
+      </div>
+      <div>
+        <div class="detail-field-label">Paket</div>
+        <div class="detail-field-value">{{ appt.user_package.package_type.name }}</div>
+      </div>
+      <div>
+        <div class="detail-field-label">Eğitmen</div>
+        <div class="detail-field-value">{{ appt.instructor.name|default:"—" }}</div>
+      </div>
+    </div>
+
+    <div class="alert alert-success">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>İptal sonrasında <strong>1 seans</strong> paketinize iade edilecek. ({{ appt.user_package.remaining_sessions }} → {{ appt.user_package.remaining_sessions|add:1 }})</span>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <a href="{% url 'appointments:list' %}" class="btn btn-secondary btn-full" style="flex:1;">Vazgeç</a>
+      <form method="post" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-full">Evet, İptal Et</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

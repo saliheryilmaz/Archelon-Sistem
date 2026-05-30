@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Randevu Onayla — Archeon{% endblock %}
+{% block topbar_title %}Randevu Onayla{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Randevu Onayı</div>
+    <div class="page-subtitle">Eğitmen atayarak randevuyu onaylayın</div>
+  </div>
+  <a href="{% url 'appointments:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:20px;">Randevu Bilgileri</div>
+    <div class="info-items" style="margin-bottom:24px;">
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
+        <div class="info-item-text"><strong>Üye:</strong> {{ appt.user.get_full_name|default:appt.user.username }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="info-item-text"><strong>Tarih:</strong> {{ appt.date|date:"d M Y, D" }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="info-item-text"><strong>Saat:</strong> {{ appt.start_time|time:"H:i" }} – {{ appt.end_time|time:"H:i" }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <div class="info-item-text"><strong>Paket:</strong> {{ appt.user_package.package_type.name }} ({{ appt.user_package.remaining_sessions }} seans kaldı)</div>
+      </div>
+      {% if appt.notes %}
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="info-item-text"><strong>Not:</strong> {{ appt.notes }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Eğitmen <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.instructor }}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button type="submit" class="btn btn-success" style="flex:1;">Onayla</button>
+        <a href="{% url 'appointments:cancel' appt.pk %}" class="btn btn-danger" style="flex:1;text-align:center;">Reddet</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

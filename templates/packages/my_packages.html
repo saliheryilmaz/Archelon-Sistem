@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Paketlerim — Archeon{% endblock %}
+{% block topbar_title %}Paketlerim{% endblock %}
+{% block mobile_cta %}
+  <a href="{% url 'appointments:create' %}" class="mobile-cta-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Randevu Al
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Paketlerim</div>
+    <div class="page-subtitle">Aktif seans paketleriniz</div>
+  </div>
+</div>
+
+{% if packages %}
+  <div class="pkg-grid">
+    {% for pkg in packages %}
+    <div class="pkg-card {% if forloop.first %}is-featured{% endif %}">
+      <div class="pkg-card-header">
+        <div class="pkg-name">{{ pkg.package_type.name }}</div>
+        <span class="badge badge-{{ pkg.status_class }}">
+          {% if pkg.remaining_sessions == 0 %}Bitti{% elif pkg.remaining_sessions <= 2 %}Az kaldı{% else %}Aktif{% endif %}
+        </span>
+      </div>
+      <div class="pkg-sessions">
+        <span class="pkg-sessions-num">{{ pkg.remaining_sessions }}</span>
+        <span class="pkg-sessions-total">/ {{ pkg.total_sessions }}</span>
+      </div>
+      <div class="pkg-sessions-label">seans kaldı</div>
+      <div class="progress">
+        <div class="progress-fill {{ pkg.status_class }}" style="width:{{ pkg.progress_percent }}%;"></div>
+      </div>
+      <div class="pkg-meta">
+        <span>{{ pkg.used_sessions }} seans kullanıldı</span>
+        <span>Atandı: {{ pkg.assigned_at|date:"d M Y" }}</span>
+        {% if pkg.expires_at %}<span>Bitiş: {{ pkg.expires_at|date:"d M Y" }}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:20px;">
+    <a href="{% url 'appointments:create' %}" class="btn btn-primary btn-full">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Randevu Al
+    </a>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <h3>Aktif paketiniz bulunmuyor</h3>
+      <p>Randevu alabilmek için yöneticinizden paket talep edin.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

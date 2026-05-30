@@ -1,0 +1,495 @@
+{% extends 'base.html' %}
+{% block title %}Yoklama Kağıdı — Archeon{% endblock %}
+{% block topbar_title %}Yoklama Kağıdı{% endblock %}
+{% block topbar_actions %}
+  {% if selected_date and grouped %}
+    <button onclick="printSheet()" class="btn btn-primary btn-sm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+           style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      Yazdır
+    </button>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+.attendance-filter-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.attendance-filter-card label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  display: block;
+  margin-bottom: 6px;
+}
+.attendance-filter-card input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  outline: none;
+}
+.attendance-filter-card input[type="date"]:focus {
+  border-color: var(--navy);
+  background: var(--white);
+}
+.attendance-group { margin-bottom: 28px; }
+.attendance-group-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.attendance-group-title { font-size: 15px; font-weight: 700; color: var(--navy, #0B3D5E); }
+.attendance-group-time  { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+.attendance-group-count { margin-left: auto; font-size: 12px; color: var(--gray-400); }
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.attendance-table thead tr { background: var(--gray-50); }
+.attendance-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gray-500);
+  border-bottom: 1px solid var(--gray-200);
+}
+.attendance-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+.attendance-table tbody tr:last-child td { border-bottom: none; }
+.attendance-table tbody tr:hover { background: var(--gray-50); }
+.check-cell { text-align: center; }
+.check-box {
+  width: 22px; height: 22px;
+  border: 2px solid var(--gray-300);
+  border-radius: 5px;
+  display: inline-block;
+}
+.remaining-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.remaining-ok   { background: #d1fae5; color: #065f46; }
+.remaining-low  { background: #fef3c7; color: #92400e; }
+.remaining-zero { background: #fee2e2; color: #991b1b; }
+.note-input {
+  width: 100%;
+  min-width: 120px;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  resize: none;
+  font-family: inherit;
+}
+.note-input:focus {
+  outline: none;
+  border-color: var(--navy, #0B3D5E);
+  background: var(--white);
+}
+
+/* Yoklama checkbox'ları */
+.att-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background .15s, border-color .15s, transform .1s;
+  user-select: none;
+}
+.att-yes {
+  border: 2px solid #86efac;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+.att-yes:hover  { background: #dcfce7; border-color: #4ade80; }
+.att-yes.checked { background: #16a34a; border-color: #15803d; color: #fff; transform: scale(1.1); }
+
+.att-no {
+  border: 2px solid #fca5a5;
+  color: #dc2626;
+  background: #fff5f5;
+}
+.att-no:hover  { background: #fee2e2; border-color: #f87171; }
+.att-no.checked { background: #dc2626; border-color: #b91c1c; color: #fff; transform: scale(1.1); }
+
+/* Satır renklendirme */
+.row-attended  td { background: #f0fdf4 !important; }
+.row-absent    td { background: #fff5f5 !important; }
+
+/* Kayıt göstergesi */
+.save-indicator {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: #1e293b;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  z-index: 9999;
+}
+</style>
+
+<!-- Filtre -->
+<div class="attendance-filter-card">
+  <div>
+    <label for="date-picker">Tarih Seçin</label>
+    <input type="date" id="date-picker" value="{{ selected_date_str }}" max="{{ today|date:'Y-m-d' }}">
+  </div>
+  {% if selected_date and available_times %}
+  <div>
+    <label for="time-picker">Saat <span style="font-weight:400;color:var(--gray-400);">(isteğe bağlı)</span></label>
+    <select id="time-picker" class="form-input" style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;background:var(--gray-50);">
+      <option value="">— Tüm saatler —</option>
+      {% for t in available_times %}
+        <option value="{{ t|time:'H:i' }}" {% if selected_time_str == t|time:'H:i' %}selected{% endif %}>
+          {{ t|time:"H:i" }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <button onclick="applyFilter()" class="btn btn-primary btn-sm">Listele</button>
+  {% if selected_date %}
+    <span style="font-size:13px;color:var(--gray-500);align-self:center;">
+      {{ selected_date|date:"d F Y, l" }}
+      {% if selected_time %} — {{ selected_time_str }}{% endif %}
+      — {{ grouped|length }} eğitmen grubu
+    </span>
+  {% endif %}
+</div>
+
+{% if not selected_date %}
+  <div class="card" style="text-align:center;padding:48px 24px;">
+    <div style="font-size:48px;margin-bottom:12px;">📋</div>
+    <div style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Yoklama kağıdı oluşturun</div>
+    <div style="font-size:13px;color:var(--gray-400);">Yukarıdan bir tarih seçip "Listele" butonuna tıklayın.</div>
+  </div>
+
+{% elif not grouped %}
+  <div class="card" style="text-align:center;padding:48px 24px;">
+    <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+    <div style="font-size:16px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">Randevu bulunamadı</div>
+    <div style="font-size:13px;color:var(--gray-400);">{{ selected_date|date:"d F Y" }} tarihinde onaylı randevu yok.</div>
+  </div>
+
+{% else %}
+  <!-- Ekran önizleme -->
+  <div id="attendance-preview">
+    {% for instructor_name, appts in grouped.items %}
+    <div class="attendance-group">
+      <div class="attendance-group-header">
+        <div>
+          <span class="attendance-group-title">{{ instructor_name }}</span>
+          {% with first=appts.0 %}
+            <span class="attendance-group-time">— {{ first.start_time|time:"H:i" }}</span>
+          {% endwith %}
+        </div>
+        <span class="attendance-group-count">{{ appts|length }} öğrenci</span>
+      </div>
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th style="width:32px;">#</th>
+            <th>Öğrenci Adı</th>
+            <th>Antrenör</th>
+            <th style="width:80px;text-align:center;">Geldi</th>
+            <th style="width:80px;text-align:center;">Gelmedi</th>
+            <th style="width:60px;text-align:center;">Seviye</th>
+            <th style="width:80px;text-align:center;">Kalan</th>
+            <th>Not</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for appt in appts %}
+          <tr data-appt-id="{{ appt.pk }}" class="{% if appt.attended == True %}row-attended{% elif appt.attended == False %}row-absent{% endif %}">
+            <td style="color:#999;font-size:12px;">{{ forloop.counter }}</td>
+            <td>
+              <span style="font-weight:600;">{{ appt.user.get_full_name|default:appt.user.username }}</span>
+              <div style="font-size:11px;color:#aaa;margin-top:1px;">{{ appt.user_package.package_type.name }}</div>
+            </td>
+            <td style="font-size:13px;color:var(--gray-700);">{{ appt.instructor.name|default:"—" }}</td>
+            <td class="check-cell">
+              <span class="att-check att-yes {% if appt.attended == True %}checked{% endif %}"
+                    data-id="{{ appt.pk }}" data-val="true" title="Geldi">
+                {% if appt.attended == True %}✓{% endif %}
+              </span>
+            </td>
+            <td class="check-cell">
+              <span class="att-check att-no {% if appt.attended == False %}checked{% endif %}"
+                    data-id="{{ appt.pk }}" data-val="false" title="Gelmedi">
+                {% if appt.attended == False %}✗{% endif %}
+              </span>
+            </td>
+            <td class="check-cell">
+              {% if appt.user.swim_level %}
+                <span style="font-weight:700;color:var(--navy);">{{ appt.user.swim_level }}</span>
+                <span style="font-size:10px;color:#aaa;">/10</span>
+              {% else %}
+                <span style="color:#ccc;">—</span>
+              {% endif %}
+            </td>
+            <td class="check-cell">
+              {% with rem=appt.user_package.remaining_sessions %}
+                {% if rem <= 0 %}
+                  <span class="remaining-badge remaining-zero">{{ rem }}</span>
+                {% elif rem <= 2 %}
+                  <span class="remaining-badge remaining-low">{{ rem }}</span>
+                {% else %}
+                  <span class="remaining-badge remaining-ok">{{ rem }}</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+            <td>
+              <textarea class="note-input" rows="1" placeholder="Not ekle…"></textarea>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Gizli print verisi (Django template'den JS'e veri aktarımı) -->
+  <script id="print-data" type="application/json">
+  {
+    "date": "{{ selected_date|date:'d F Y, l' }}",
+    "time_filter": "{% if selected_time %}{{ selected_time_str }}{% endif %}",
+    "now": "{% now 'd.m.Y H:i' %}",
+    "groups": [
+      {% for instructor_name, appts in grouped.items %}
+      {
+        "instructor": "{{ instructor_name|escapejs }}",
+        "time": "{{ appts.0.start_time|time:'H:i' }}",
+        "count": {{ appts|length }},
+        "students": [
+          {% for appt in appts %}
+          {
+            "no": {{ forloop.counter }},
+            "name": "{{ appt.user.get_full_name|default:appt.user.username|escapejs }}",
+            "package": "{{ appt.user_package.package_type.name|escapejs }}",
+            "instructor": "{{ appt.instructor.name|default:""|escapejs }}",
+            "level": {% if appt.user.swim_level %}{{ appt.user.swim_level }}{% else %}null{% endif %},
+            "remaining": {{ appt.user_package.remaining_sessions }}
+          }{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        ]
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+  </script>
+{% endif %}
+
+<div class="save-indicator" id="save-indicator">Kaydedildi ✓</div>
+
+<script>
+const SAVE_URL = '{% url "appointments:save_attendance" %}';
+const CSRF = '{{ csrf_token }}';
+
+function showSaved(ok) {
+  const el = document.getElementById('save-indicator');
+  el.textContent = ok ? 'Kaydedildi ✓' : 'Hata!';
+  el.style.background = ok ? '#1e293b' : '#dc2626';
+  el.style.opacity = '1';
+  setTimeout(function() { el.style.opacity = '0'; }, 1500);
+}
+
+function saveAttendance(apptId, value) {
+  fetch(SAVE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': CSRF,
+    },
+    body: JSON.stringify({ id: apptId, value: value }),
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) { showSaved(d.ok); })
+  .catch(function() { showSaved(false); });
+}
+
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.att-check');
+  if (!btn) return;
+
+  const apptId = parseInt(btn.dataset.id);
+  const val    = btn.dataset.val === 'true';   // true=geldi, false=gelmedi
+  const row    = btn.closest('tr');
+
+  // Aynı butona tekrar tıklanırsa → işareti kaldır (null)
+  if (btn.classList.contains('checked')) {
+    btn.classList.remove('checked');
+    btn.textContent = '';
+    row.classList.remove('row-attended', 'row-absent');
+    saveAttendance(apptId, null);
+    return;
+  }
+
+  // Karşı butonu temizle
+  const sibling = row.querySelector('.att-check[data-val="' + (val ? 'false' : 'true') + '"]');
+  if (sibling) { sibling.classList.remove('checked'); sibling.textContent = ''; }
+
+  // Bu butonu işaretle
+  btn.classList.add('checked');
+  btn.textContent = val ? '✓' : '✗';
+  row.classList.remove('row-attended', 'row-absent');
+  row.classList.add(val ? 'row-attended' : 'row-absent');
+
+  saveAttendance(apptId, val);
+});
+
+function applyFilter() {
+  const d = document.getElementById('date-picker').value;
+  if (!d) return;
+  const tEl = document.getElementById('time-picker');
+  const t = tEl ? tEl.value : '';
+  let url = '?date=' + d;
+  if (t) url += '&time=' + t;
+  window.location.href = url;
+}
+
+// Tarih değişince sayfayı yenile (saat dropdown'u güncellensin)
+document.getElementById('date-picker').addEventListener('change', function() {
+  const d = this.value;
+  if (d) window.location.href = '?date=' + d;
+});
+document.getElementById('date-picker').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') applyFilter();
+});
+
+function printSheet() {
+  const raw = document.getElementById('print-data');
+  if (!raw) return;
+  const data = JSON.parse(raw.textContent);
+
+  let groupsHtml = '';
+  data.groups.forEach(function(g) {
+    let rows = '';
+    g.students.forEach(function(s) {
+      let remColor = s.remaining <= 0 ? '#c00' : (s.remaining <= 2 ? '#b45309' : '#065f46');
+      let levelHtml = s.level !== null
+        ? `<span style="font-weight:700;color:#0B3D5E;">${s.level}</span><span style="font-size:9px;color:#999;">/10</span>`
+        : `<span style="color:#ccc;">—</span>`;
+      rows += `
+        <tr>
+          <td style="color:#888;font-size:11px;text-align:center;">${s.no}</td>
+          <td>
+            <span style="font-weight:700;font-size:13px;">${s.name}</span>
+            <div style="font-size:10px;color:#999;margin-top:1px;">${s.package}</div>
+          </td>
+          <td style="font-size:12px;color:#333;">${s.instructor || '—'}</td>
+          <td style="text-align:center;"><span style="display:inline-block;width:18px;height:18px;border:1.5px solid #555;border-radius:3px;"></span></td>
+          <td style="text-align:center;"><span style="display:inline-block;width:18px;height:18px;border:1.5px solid #555;border-radius:3px;"></span></td>
+          <td style="text-align:center;">${levelHtml}</td>
+          <td style="text-align:center;font-weight:700;color:${remColor};font-size:13px;">${s.remaining}</td>
+          <td style="min-width:100px;"><div style="border-bottom:1px solid #bbb;min-height:20px;"></div></td>
+        </tr>`;
+    });
+
+    groupsHtml += `
+      <div style="margin-bottom:24px;page-break-inside:avoid;">
+        <div style="background:#f0f0f0;padding:7px 12px;border-top:2px solid #0B3D5E;border-bottom:1px solid #ccc;display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
+          <span style="font-size:14px;font-weight:800;color:#0B3D5E;">${g.instructor}</span>
+          <span style="font-size:12px;color:#555;">Saat: <strong>${g.time}</strong> &nbsp;|&nbsp; ${g.count} öğrenci</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #ccc;border-top:none;">
+          <thead>
+            <tr style="background:#e8e8e8;">
+              <th style="padding:6px 10px;text-align:center;width:30px;border-bottom:1px solid #ccc;">#</th>
+              <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #ccc;">Öğrenci Adı</th>
+              <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #ccc;">Antrenör</th>
+              <th style="padding:6px 10px;text-align:center;width:60px;border-bottom:1px solid #ccc;">Geldi</th>
+              <th style="padding:6px 10px;text-align:center;width:60px;border-bottom:1px solid #ccc;">Gelmedi</th>
+              <th style="padding:6px 10px;text-align:center;width:50px;border-bottom:1px solid #ccc;">Seviye</th>
+              <th style="padding:6px 10px;text-align:center;width:55px;border-bottom:1px solid #ccc;">Kalan</th>
+              <th style="padding:6px 10px;text-align:left;border-bottom:1px solid #ccc;">Not</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Yoklama — ${data.date}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 20px 24px; }
+    table td, table th { border-right: 1px solid #ddd; }
+    table td:last-child, table th:last-child { border-right: none; }
+    tbody tr { border-bottom: 1px solid #eee; }
+    tbody tr:last-child { border-bottom: 1px solid #ccc; }
+    @page { size: A4; margin: 15mm 12mm; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <!-- Başlık -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid #0B3D5E;">
+    <div>
+      <div style="font-size:20px;font-weight:800;color:#0B3D5E;">🏊 Archeon Yüzme Kulübü</div>
+      <div style="font-size:14px;font-weight:600;margin-top:3px;">Yoklama Kağıdı — ${data.date}${data.time_filter ? ' · ' + data.time_filter : ''}</div>
+    </div>
+    <div style="font-size:11px;color:#666;text-align:right;">
+      Yazdırma tarihi:<br><strong>${data.now}</strong>
+    </div>
+  </div>
+
+  ${groupsHtml}
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  // Fontların yüklenmesi için kısa bekleme
+  setTimeout(function() { win.print(); }, 400);
+}
+</script>
+
+{% endblock %}

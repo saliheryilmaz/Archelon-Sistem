@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B3D5E">
+  <title>Kayıt Ol — Archelon</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+<div class="auth-screen">
+  <div class="auth-box" style="max-width:460px;">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">
+        <svg viewBox="0 0 80 40" fill="none">
+          <path d="M0 28 C10 18,20 38,30 28 S50 18,60 28 S70 38,80 28" stroke="#0B3D5E" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="auth-app-name">Archelon</div>
+    </div>
+
+    <div class="auth-heading">Kayıt Ol</div>
+    <div class="auth-subtext">Yeni üye hesabı oluştur</div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ad</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Soyad</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kullanıcı adı</label>
+        {{ form.username }}
+        {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          {{ form.phone }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Doğum tarihi</label>
+          {{ form.birth_date }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-posta</label>
+        {{ form.email }}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Şifre</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}<div class="form-error">{{ form.password1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Şifre tekrar</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}<div class="form-error">{{ form.password2.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:4px;">Hesap Oluştur</button>
+    </form>
+
+    <div class="auth-switch">
+      Zaten hesabınız var mı? <a href="{% url 'accounts:login' %}">Giriş yapın</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

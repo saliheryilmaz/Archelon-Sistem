@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — Archeon{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ title }}</div>
+    <div class="page-subtitle">Gelir veya gider kaydı oluşturun</div>
+  </div>
+</div>
+
+<div class="card" style="max-width:560px;">
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Tür seçimi -->
+    <div class="form-group">
+      <label class="form-label">Tür <span style="color:#dc2626;">*</span></label>
+      <div style="display:flex;gap:10px;">
+        <label style="flex:1;cursor:pointer;">
+          <input type="radio" name="transaction_type" value="gelir"
+            {% if form.transaction_type.value == 'gelir' or not form.transaction_type.value %}checked{% endif %}
+            style="display:none;" class="type-radio">
+          <div class="type-btn" data-value="gelir" style="
+            border:2px solid {% if form.transaction_type.value == 'gelir' or not form.transaction_type.value %}#16a34a{% else %}var(--gray-200){% endif %};
+            border-radius:10px;padding:14px;text-align:center;
+            background:{% if form.transaction_type.value == 'gelir' or not form.transaction_type.value %}#f0fdf4{% else %}white{% endif %};
+            transition:all .15s;">
+            <div style="font-size:22px;margin-bottom:4px;">💰</div>
+            <div style="font-weight:700;color:{% if form.transaction_type.value == 'gelir' or not form.transaction_type.value %}#16a34a{% else %}var(--gray-500){% endif %};">Gelir</div>
+          </div>
+        </label>
+        <label style="flex:1;cursor:pointer;">
+          <input type="radio" name="transaction_type" value="gider"
+            {% if form.transaction_type.value == 'gider' %}checked{% endif %}
+            style="display:none;" class="type-radio">
+          <div class="type-btn" data-value="gider" style="
+            border:2px solid {% if form.transaction_type.value == 'gider' %}#dc2626{% else %}var(--gray-200){% endif %};
+            border-radius:10px;padding:14px;text-align:center;
+            background:{% if form.transaction_type.value == 'gider' %}#fef2f2{% else %}white{% endif %};
+            transition:all .15s;">
+            <div style="font-size:22px;margin-bottom:4px;">💸</div>
+            <div style="font-weight:700;color:{% if form.transaction_type.value == 'gider' %}#dc2626{% else %}var(--gray-500){% endif %};">Gider</div>
+          </div>
+        </label>
+      </div>
+      {% if form.transaction_type.errors %}
+        <div class="form-error">{{ form.transaction_type.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Ödeme yöntemi -->
+    <div class="form-group">
+      <label class="form-label">Ödeme Yöntemi <span style="color:#dc2626;">*</span></label>
+      <div style="display:flex;gap:10px;">
+        <label style="flex:1;cursor:pointer;">
+          <input type="radio" name="payment_method" value="nakit"
+            {% if form.payment_method.value == 'nakit' or not form.payment_method.value %}checked{% endif %}
+            style="display:none;" class="method-radio">
+          <div class="method-btn" data-value="nakit" style="
+            border:2px solid {% if form.payment_method.value == 'nakit' or not form.payment_method.value %}#0369a1{% else %}var(--gray-200){% endif %};
+            border-radius:10px;padding:14px;text-align:center;
+            background:{% if form.payment_method.value == 'nakit' or not form.payment_method.value %}#f0f9ff{% else %}white{% endif %};
+            transition:all .15s;">
+            <div style="font-size:22px;margin-bottom:4px;">💵</div>
+            <div style="font-weight:700;color:{% if form.payment_method.value == 'nakit' or not form.payment_method.value %}#0369a1{% else %}var(--gray-500){% endif %};">Nakit</div>
+          </div>
+        </label>
+        <label style="flex:1;cursor:pointer;">
+          <input type="radio" name="payment_method" value="havale"
+            {% if form.payment_method.value == 'havale' %}checked{% endif %}
+            style="display:none;" class="method-radio">
+          <div class="method-btn" data-value="havale" style="
+            border:2px solid {% if form.payment_method.value == 'havale' %}#7c3aed{% else %}var(--gray-200){% endif %};
+            border-radius:10px;padding:14px;text-align:center;
+            background:{% if form.payment_method.value == 'havale' %}#faf5ff{% else %}white{% endif %};
+            transition:all .15s;">
+            <div style="font-size:22px;margin-bottom:4px;">🏦</div>
+            <div style="font-weight:700;color:{% if form.payment_method.value == 'havale' %}#7c3aed{% else %}var(--gray-500){% endif %};">Havale</div>
+          </div>
+        </label>
+      </div>
+      {% if form.payment_method.errors %}
+        <div class="form-error">{{ form.payment_method.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Tutar -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.amount.id_for_label }}">
+        Tutar (₺) <span style="color:#dc2626;">*</span>
+      </label>
+      {{ form.amount }}
+      {% if form.amount.errors %}
+        <div class="form-error">{{ form.amount.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Açıklama -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.description.id_for_label }}">
+        Açıklama <span style="color:#dc2626;">*</span>
+      </label>
+      {{ form.description }}
+      {% if form.description.errors %}
+        <div class="form-error">{{ form.description.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Tarih -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.date.id_for_label }}">
+        Tarih <span style="color:#dc2626;">*</span>
+      </label>
+      {{ form.date }}
+      {% if form.date.errors %}
+        <div class="form-error">{{ form.date.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <!-- Notlar -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.notes.id_for_label }}">Notlar</label>
+      {{ form.notes }}
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button type="submit" class="btn btn-primary" style="flex:1;">Kaydet</button>
+      <a href="{% url 'finance:list' %}" class="btn" style="flex:1;text-align:center;background:var(--navy-light);color:var(--navy);">İptal</a>
+    </div>
+  </form>
+</div>
+
+<script>
+// Tür seçimi görsel güncelleme
+document.querySelectorAll('.type-radio').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.type-radio').forEach(function(r) {
+      var btn = r.nextElementSibling;
+      var isGelir = r.value === 'gelir';
+      var activeColor = isGelir ? '#16a34a' : '#dc2626';
+      var activeBg = isGelir ? '#f0fdf4' : '#fef2f2';
+      if (r.checked) {
+        btn.style.borderColor = activeColor;
+        btn.style.background = activeBg;
+        btn.querySelector('div:last-child').style.color = activeColor;
+      } else {
+        btn.style.borderColor = 'var(--gray-200)';
+        btn.style.background = 'white';
+        btn.querySelector('div:last-child').style.color = 'var(--gray-500)';
+      }
+    });
+  });
+});
+
+// Yöntem seçimi görsel güncelleme
+document.querySelectorAll('.method-radio').forEach(function(radio) {
+  radio.addEventListener('change', function() {
+    document.querySelectorAll('.method-radio').forEach(function(r) {
+      var btn = r.nextElementSibling;
+      var isNakit = r.value === 'nakit';
+      var activeColor = isNakit ? '#0369a1' : '#7c3aed';
+      var activeBg = isNakit ? '#f0f9ff' : '#faf5ff';
+      if (r.checked) {
+        btn.style.borderColor = activeColor;
+        btn.style.background = activeBg;
+        btn.querySelector('div:last-child').style.color = activeColor;
+      } else {
+        btn.style.borderColor = 'var(--gray-200)';
+        btn.style.background = 'white';
+        btn.querySelector('div:last-child').style.color = 'var(--gray-500)';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

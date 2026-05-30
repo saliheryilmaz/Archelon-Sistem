@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} — Archeon{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">{{ title }}</div>
+  </div>
+  <a href="{% url 'appointments:instructor_list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Ad Soyad</label>
+        {{ form.name }}
+        {% if form.name.errors %}<div class="form-error">{{ form.name.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+        {{ form.is_active }}
+        <label class="form-label" style="margin:0;">Aktif</label>
+      </div>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger"><span>{{ form.non_field_errors.0 }}</span></div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">Kaydet</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

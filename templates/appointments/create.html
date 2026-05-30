@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Randevu Al — Archeon{% endblock %}
+{% block topbar_title %}Randevu Al{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Yeni Randevu</div>
+    <div class="page-subtitle">Tarih ve saat seçerek randevunuzu oluşturun</div>
+  </div>
+  <a href="{% url 'appointments:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:20px;">Randevu bilgileri</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Paket</label>
+        {{ form.user_package }}
+        {% if form.user_package.errors %}<div class="form-error">{{ form.user_package.errors.0 }}</div>{% endif %}
+        <div class="form-hint">Seçtiğiniz paketten 1 seans düşecektir.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Eğitmen <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.instructor }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tarih</label>
+        {{ form.date }}
+        {% if form.date.errors %}<div class="form-error">{{ form.date.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Başlangıç saati</label>
+          {{ form.start_time }}
+          {% if form.start_time.errors %}<div class="form-error">{{ form.start_time.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bitiş saati</label>
+          {{ form.end_time }}
+          {% if form.end_time.errors %}<div class="form-error">{{ form.end_time.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notlar <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.notes }}
+      </div>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span>{{ form.non_field_errors.0 }}</span>
+        </div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary btn-full">Randevu Talep Et</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:18px;">Bilgi</div>
+    <div class="info-items">
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="info-item-text">Randevu talebiniz admin tarafından onaylandıktan sonra seçtiğiniz paketten <strong>1 seans</strong> düşer.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="info-item-text">Randevunuzu iptal ederseniz, yalnızca onaylanmış randevularda seans hakkınız iade edilir.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="info-item-text">Çalışma saatleri: Hafta içi 09:00 – 20:00, Cumartesi 09:00 – 17:00.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

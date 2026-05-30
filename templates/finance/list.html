@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load finance_tags %}
+{% block title %}Gelir / Gider — Archeon{% endblock %}
+{% block topbar_title %}Gelir / Gider{% endblock %}
+{% block topbar_actions %}
+  <a href="{% url 'finance:create' %}" class="btn btn-primary btn-sm">+ Yeni İşlem</a>
+{% endblock %}
+{% block mobile_cta %}
+  <a href="{% url 'finance:create' %}" class="mobile-cta-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Yeni İşlem
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Gelir / Gider</div>
+    <div class="page-subtitle">Nakit ve havale işlemleri</div>
+  </div>
+</div>
+
+<!-- Özet Kartlar -->
+<div class="stats-grid" style="margin-bottom:20px;">
+  <div class="stat-card">
+    <div class="stat-label">Toplam Gelir</div>
+    <div class="stat-value" style="color:#16a34a;">{{ total_income|tl }}</div>
+    <div class="stat-sub">Nakit: {{ cash_income|tl }} &nbsp;|&nbsp; Havale: {{ transfer_income|tl }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Toplam Gider</div>
+    <div class="stat-value" style="color:#dc2626;">{{ total_expense|tl }}</div>
+    <div class="stat-sub">Nakit: {{ cash_expense|tl }} &nbsp;|&nbsp; Havale: {{ transfer_expense|tl }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Net Bakiye</div>
+    <div class="stat-value" style="color:{% if net >= 0 %}#0B3D5E{% else %}#dc2626{% endif %};">
+      {{ net|tl }}
+    </div>
+    <div class="stat-sub">Gelir − Gider</div>
+  </div>
+</div>
+
+<!-- Filtreler -->
+<div class="card" style="margin-bottom:16px;padding:16px 20px;">
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12px;font-weight:600;color:var(--gray-500);">Tür</label>
+      <select name="tur" class="form-control" style="min-width:120px;">
+        <option value="">Tümü</option>
+        <option value="gelir" {% if filter_type == 'gelir' %}selected{% endif %}>Gelir</option>
+        <option value="gider" {% if filter_type == 'gider' %}selected{% endif %}>Gider</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12px;font-weight:600;color:var(--gray-500);">Yöntem</label>
+      <select name="yontem" class="form-control" style="min-width:120px;">
+        <option value="">Tümü</option>
+        <option value="nakit" {% if filter_method == 'nakit' %}selected{% endif %}>Nakit</option>
+        <option value="havale" {% if filter_method == 'havale' %}selected{% endif %}>Havale</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12px;font-weight:600;color:var(--gray-500);">Yıl</label>
+      <select name="yil" class="form-control" style="min-width:90px;">
+        {% for y in year_list %}
+          <option value="{{ y }}" {% if filter_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12px;font-weight:600;color:var(--gray-500);">Ay</label>
+      <select name="ay" class="form-control" style="min-width:110px;">
+        <option value="">Tüm aylar</option>
+        {% for num, name in months %}
+          <option value="{{ num }}" {% if filter_month == num|stringformat:"s" %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Filtrele</button>
+    <a href="{% url 'finance:list' %}" class="btn btn-sm" style="height:38px;background:var(--navy-light);color:var(--navy);">Temizle</a>
+  </form>
+</div>
+
+<!-- Desktop Tablo -->
+<div class="card d-desktop">
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Tarih</th>
+          <th>Tür</th>
+          <th>Yöntem</th>
+          <th>Açıklama</th>
+          <th style="text-align:right;">Tutar</th>
+          <th>Kaydeden</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+        <tr>
+          <td style="font-size:13px;color:var(--gray-500);white-space:nowrap;">{{ t.date|date:"d M Y" }}</td>
+          <td>
+            {% if t.transaction_type == 'gelir' %}
+              <span class="badge badge-success">Gelir</span>
+            {% else %}
+              <span class="badge badge-danger">Gider</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if t.payment_method == 'nakit' %}
+              <span class="badge" style="background:#f0f9ff;color:#0369a1;">💵 Nakit</span>
+            {% else %}
+              <span class="badge" style="background:#faf5ff;color:#7c3aed;">🏦 Havale</span>
+            {% endif %}
+          </td>
+          <td style="font-weight:500;">
+            {{ t.description }}
+            {% if t.notes %}
+              <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">{{ t.notes|truncatechars:60 }}</div>
+            {% endif %}
+          </td>
+          <td style="text-align:right;font-weight:700;font-size:15px;{% if t.transaction_type == 'gelir' %}color:#16a34a;{% else %}color:#dc2626;{% endif %}">
+            {% if t.transaction_type == 'gelir' %}+{% else %}−{% endif %}{{ t.amount|tl }}
+          </td>
+          <td style="font-size:12px;color:var(--gray-400);">{{ t.created_by.get_full_name|default:t.created_by.username|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="{% url 'finance:edit' t.pk %}" class="btn btn-sm" style="background:var(--navy-light);color:var(--navy);padding:4px 10px;">Düzenle</a>
+              <form method="post" action="{% url 'finance:delete' t.pk %}" onsubmit="return confirm('Bu işlemi silmek istediğinizden emin misiniz?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm" style="padding:4px 10px;">Sil</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center;padding:48px;color:var(--gray-400);">
+            Henüz işlem kaydı yok.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Mobile Kartlar -->
+<div class="d-mobile">
+  {% for t in transactions %}
+  <div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        {% if t.transaction_type == 'gelir' %}
+          <span class="badge badge-success">Gelir</span>
+        {% else %}
+          <span class="badge badge-danger">Gider</span>
+        {% endif %}
+        {% if t.payment_method == 'nakit' %}
+          <span class="badge" style="background:#f0f9ff;color:#0369a1;">💵 Nakit</span>
+        {% else %}
+          <span class="badge" style="background:#faf5ff;color:#7c3aed;">🏦 Havale</span>
+        {% endif %}
+      </div>
+      <span style="font-size:12px;color:var(--gray-400);">{{ t.date|date:"d M Y" }}</span>
+    </div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:4px;">{{ t.description }}</div>
+    {% if t.notes %}
+      <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px;">{{ t.notes|truncatechars:80 }}</div>
+    {% endif %}
+    <div style="font-size:24px;font-weight:700;margin-bottom:12px;{% if t.transaction_type == 'gelir' %}color:#16a34a;{% else %}color:#dc2626;{% endif %}">
+      {% if t.transaction_type == 'gelir' %}+{% else %}−{% endif %}{{ t.amount|tl }}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{% url 'finance:edit' t.pk %}" class="btn btn-sm" style="flex:1;text-align:center;background:var(--navy-light);color:var(--navy);">Düzenle</a>
+      <form method="post" action="{% url 'finance:delete' t.pk %}" style="flex:1;" onsubmit="return confirm('Bu işlemi silmek istediğinizden emin misiniz?')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm" style="width:100%;">Sil</button>
+      </form>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <h3>Henüz işlem yok</h3>
+      <p>İlk işlemi eklemek için yukarıdaki butonu kullanın.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

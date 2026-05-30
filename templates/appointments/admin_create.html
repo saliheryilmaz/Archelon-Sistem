@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Randevu Ekle — Archeon{% endblock %}
+{% block topbar_title %}Randevu Ekle{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Randevu Ekle</div>
+    <div class="page-subtitle">Üye için randevu oluştur — direkt onaylı kaydedilir</div>
+  </div>
+  <a href="{% url 'appointments:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <form method="post" id="admin-appt-form">
+      {% csrf_token %}
+
+      <!-- Üye seçimi -->
+      <div class="form-group">
+        <label class="form-label">Üye</label>
+        {{ form.member }}
+        {% if form.member.errors %}<div class="form-error">{{ form.member.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Paket (dinamik) -->
+      <div class="form-group" id="pkg-group">
+        <label class="form-label">Paket</label>
+        <select name="selected_package" id="pkg-select" class="form-input">
+          <option value="">— Önce üye seçin —</option>
+        </select>
+        <div id="pkg-hint" style="font-size:12px;color:var(--gray-400);margin-top:4px;"></div>
+      </div>
+
+      <!-- Eğitmen -->
+      <div class="form-group">
+        <label class="form-label">Eğitmen <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.instructor }}
+      </div>
+
+      <!-- Tarih -->
+      <div class="form-group">
+        <label class="form-label">Tarih</label>
+        {{ form.date }}
+        {% if form.date.errors %}<div class="form-error">{{ form.date.errors.0 }}</div>{% endif %}
+      </div>
+
+      <!-- Saat -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Başlangıç saati</label>
+          {{ form.start_time }}
+          {% if form.start_time.errors %}<div class="form-error">{{ form.start_time.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bitiş saati</label>
+          {{ form.end_time }}
+          {% if form.end_time.errors %}<div class="form-error">{{ form.end_time.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+
+      <!-- Notlar -->
+      <div class="form-group">
+        <label class="form-label">Notlar <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.notes }}
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <span>{{ form.non_field_errors.0 }}</span>
+        </div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary btn-full" id="submit-btn" disabled>
+        Randevu Oluştur &amp; Onayla
+      </button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:18px;">Bilgi</div>
+    <div class="info-items">
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="info-item-text">Admin tarafından oluşturulan randevular <strong>direkt onaylı</strong> kaydedilir ve üyenin paketinden 1 seans düşer.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        </div>
+        <div class="info-item-text">Üyenin birden fazla aktif paketi varsa en son atanan paket otomatik seçilir.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const memberSelect = document.getElementById('id_member');
+  const pkgSelect    = document.getElementById('pkg-select');
+  const pkgHint      = document.getElementById('pkg-hint');
+  const submitBtn    = document.getElementById('submit-btn');
+
+  function loadPackages(memberId) {
+    pkgSelect.innerHTML = '<option value="">Yükleniyor…</option>';
+    pkgHint.textContent = '';
+    submitBtn.disabled = true;
+
+    if (!memberId) {
+      pkgSelect.innerHTML = '<option value="">— Önce üye seçin —</option>';
+      return;
+    }
+
+    fetch('{% url "appointments:member_packages_json" %}?member_id=' + memberId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        pkgSelect.innerHTML = '';
+        if (!data.packages.length) {
+          pkgSelect.innerHTML = '<option value="">Bu üyenin aktif paketi yok</option>';
+          pkgHint.textContent = 'Randevu oluşturmak için önce paket atayın.';
+          pkgHint.style.color = '#c00';
+          submitBtn.disabled = true;
+        } else {
+          data.packages.forEach(function(p) {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = p.label;
+            pkgSelect.appendChild(opt);
+          });
+          pkgHint.textContent = data.packages.length + ' aktif paket bulundu.';
+          pkgHint.style.color = '#065f46';
+          submitBtn.disabled = false;
+        }
+      })
+      .catch(function() {
+        pkgSelect.innerHTML = '<option value="">Hata oluştu</option>';
+        submitBtn.disabled = true;
+      });
+  }
+
+  memberSelect.addEventListener('change', function() {
+    loadPackages(this.value);
+  });
+
+  // Sayfa yüklendiğinde seçili üye varsa yükle (form hatası sonrası)
+  if (memberSelect.value) {
+    loadPackages(memberSelect.value);
+  }
+})();
+</script>
+{% endblock %}

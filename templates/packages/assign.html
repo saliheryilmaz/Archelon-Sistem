@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Paket Ata — Archeon{% endblock %}
+{% block topbar_title %}Paket Ata{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Paket Ata</div>
+    <div class="page-subtitle">Üyeye seans paketi tanımla</div>
+  </div>
+  <a href="{% url 'packages:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <div class="card-title" style="margin-bottom:20px;">Paket bilgileri</div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Üye</label>
+        {{ form.user }}
+        {% if form.user.errors %}<div class="form-error">{{ form.user.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paket türü</label>
+        {{ form.package_type }}
+        {% if form.package_type.errors %}<div class="form-error">{{ form.package_type.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Başlangıç saati <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.start_time }}
+        {% if form.start_time.errors %}<div class="form-error">{{ form.start_time.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ödeme tarihi <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.payment_date }}
+        {% if form.payment_date.errors %}<div class="form-error">{{ form.payment_date.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bitiş tarihi <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.expires_at }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notlar <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.notes }}
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Paketi Ata</button>
+    </form>
+  </div>
+
+  <div>
+    <div class="nav-group-label" style="color:var(--gray-400);margin-bottom:12px;">Mevcut paket türleri</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      {% for pkg_type in package_types %}
+      <div class="pkg-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="pkg-name">{{ pkg_type.name }}</div>
+          <div style="display:flex;align-items:baseline;gap:3px;">
+            <span style="font-size:26px;font-weight:700;color:var(--navy);line-height:1;">{{ pkg_type.session_count }}</span>
+            <span style="font-size:12px;color:var(--gray-500);margin-left:2px;">seans</span>
+          </div>
+        </div>
+        {% if pkg_type.description %}
+          <div style="font-size:12px;color:var(--gray-400);margin-top:6px;">{{ pkg_type.description }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

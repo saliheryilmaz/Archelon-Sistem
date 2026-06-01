@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Paket Düzenle — Archeon{% endblock %}
+{% block topbar_title %}Paket Düzenle{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Paket Düzenle</div>
+    <div class="page-subtitle">{{ pkg.user.get_full_name }} — {{ pkg.package_type.name }}</div>
+  </div>
+  <a href="{% url 'packages:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div class="grid-2-3">
+  <div class="card">
+    <!-- Paket özeti -->
+    <div style="background:var(--navy-light);border-radius:var(--r-sm);padding:14px 16px;margin-bottom:22px;display:flex;align-items:center;gap:14px;">
+      <div style="width:44px;height:44px;background:var(--navy);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--navy);">{{ pkg.user.get_full_name|default:pkg.user.username }}</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">{{ pkg.package_type.name }} · Toplam {{ pkg.total_sessions }} seans · Atayan: {{ pkg.assigned_by }}</div>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">Kalan seans</label>
+        {{ form.remaining_sessions }}
+        <div class="form-hint">Toplam seans: {{ pkg.total_sessions }} · Kullanılan: {{ pkg.used_sessions }}</div>
+        {% if form.remaining_sessions.errors %}<div class="form-error">{{ form.remaining_sessions.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Başlangıç saati <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.start_time }}
+        {% if form.start_time.errors %}<div class="form-error">{{ form.start_time.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ödeme tarihi <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.payment_date }}
+        {% if form.payment_date.errors %}<div class="form-error">{{ form.payment_date.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bitiş tarihi <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.expires_at }}
+        {% if form.expires_at.errors %}<div class="form-error">{{ form.expires_at.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notlar <span class="optional">(isteğe bağlı)</span></label>
+        {{ form.notes }}
+      </div>
+
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--r-sm);">
+        {{ form.is_active }}
+        <label for="{{ form.is_active.id_for_label }}" style="font-size:14px;font-weight:600;color:var(--gray-700);cursor:pointer;margin:0;">Paket aktif</label>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:24px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Kaydet</button>
+        <a href="{% url 'packages:list' %}" class="btn btn-secondary">İptal</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sağ bilgi kartı -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:16px;">Paket durumu</div>
+    <div style="text-align:center;padding:16px 0 20px;">
+      <div style="font-size:52px;font-weight:700;color:var(--navy);line-height:1;">{{ pkg.remaining_sessions }}</div>
+      <div style="font-size:14px;color:var(--gray-500);margin-top:4px;">/ {{ pkg.total_sessions }} seans kaldı</div>
+      <div class="progress" style="margin-top:16px;">
+        <div class="progress-fill {{ pkg.status_class }}" style="width:{{ pkg.progress_percent }}%;"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--gray-500);">Atanma tarihi</span>
+        <span style="font-weight:600;color:var(--gray-700);">{{ pkg.assigned_at|date:"d.m.Y" }}</span>
+      </div>
+      {% if pkg.payment_date %}
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--gray-500);">Ödeme tarihi</span>
+        <span style="font-weight:600;color:var(--gray-700);">{{ pkg.payment_date|date:"d.m.Y" }}</span>
+      </div>
+      {% endif %}
+      {% if pkg.expires_at %}
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--gray-500);">Bitiş tarihi</span>
+        <span style="font-weight:600;color:var(--gray-700);">{{ pkg.expires_at|date:"d.m.Y" }}</span>
+      </div>
+      {% endif %}
+      {% if pkg.start_time %}
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--gray-500);">Saat</span>
+        <span style="font-weight:600;color:var(--gray-700);">{{ pkg.start_time|time:"H:i" }}</span>
+      </div>
+      {% endif %}
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--gray-500);">Durum</span>
+        {% if pkg.is_active %}
+          <span class="badge badge-success">Aktif</span>
+        {% else %}
+          <span class="badge badge-danger">Pasif</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

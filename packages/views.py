@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from .models import UserPackage, PackageType
-from .forms import AssignPackageForm
+from .forms import AssignPackageForm, EditPackageForm
 from accounts.models import CustomUser
 
 
@@ -51,6 +51,17 @@ def deactivate_package(request, pk):
 
 
 @login_required
-def my_packages(request):
+@admin_required
+def edit_package(request, pk):
+    pkg = get_object_or_404(UserPackage, pk=pk)
+    form = EditPackageForm(request.POST or None, instance=pkg)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Paket güncellendi.')
+        return redirect('packages:list')
+    return render(request, 'packages/edit.html', {'form': form, 'pkg': pkg})
+
+
+
     packages = request.user.packages.select_related('package_type').filter(is_active=True)
     return render(request, 'packages/my_packages.html', {'packages': packages})

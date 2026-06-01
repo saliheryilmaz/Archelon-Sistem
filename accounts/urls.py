@@ -10,4 +10,5 @@ urlpatterns = [
     path('kullanicilar/', views.user_list, name='user_list'),
     path('kullanicilar/yeni/', views.user_create, name='user_create'),
     path('kullanicilar/<int:pk>/duzenle/', views.user_edit, name='user_edit'),
+    path('kullanicilar/<int:pk>/sil/', views.user_delete, name='user_delete'),
 ]

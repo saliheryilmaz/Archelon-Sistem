@@ -4,17 +4,20 @@ from django.conf import settings
 
 class PackageType(models.Model):
     KURSIYER = 'kursiyer'
+    KURSIYER_4 = 'kursiyer_4'
     OZEL_DERS = 'ozel_ders'
     DENEME_DERSI = 'deneme_dersi'
 
     TYPE_CHOICES = [
-        (KURSIYER, 'Kursiyer'),
+        (KURSIYER, 'Kursiyer (8 Seans)'),
+        (KURSIYER_4, 'Kursiyer (4 Seans)'),
         (OZEL_DERS, 'Özel Ders'),
         (DENEME_DERSI, 'Deneme Dersi'),
     ]
 
     DEFAULT_SESSIONS = {
         KURSIYER: 8,
+        KURSIYER_4: 4,
         OZEL_DERS: 8,
         DENEME_DERSI: 1,
     }
@@ -36,9 +39,10 @@ class PackageType(models.Model):
     @classmethod
     def get_or_create_defaults(cls):
         defaults = [
-            (cls.DENEME_DERSI, 'Deneme Dersi', 1, 'Tek seferlik deneme dersi.'),
-            (cls.KURSIYER, 'Kursiyer', 8, 'Temel yüzme eğitimi paketi.'),
-            (cls.OZEL_DERS, 'Özel Ders', 8, 'Birebir özel yüzme dersi paketi.'),
+            (cls.DENEME_DERSI, 'Deneme Dersi',      1, 'Tek seferlik deneme dersi.'),
+            (cls.KURSIYER_4,   'Kursiyer (4 Seans)', 4, 'Temel yüzme eğitimi paketi (4 seans).'),
+            (cls.KURSIYER,     'Kursiyer (8 Seans)', 8, 'Temel yüzme eğitimi paketi (8 seans).'),
+            (cls.OZEL_DERS,    'Özel Ders',          8, 'Birebir özel yüzme dersi paketi.'),
         ]
         for slug, name, count, desc in defaults:
             cls.objects.update_or_create(slug=slug, defaults={

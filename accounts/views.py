@@ -54,6 +54,23 @@ def user_create(request):
 
 
 @login_required
+def user_delete(request, pk):
+    if not request.user.is_admin_role:
+        messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
+        return redirect('dashboard:index')
+    user = get_object_or_404(CustomUser, pk=pk)
+    if user == request.user:
+        messages.error(request, 'Kendinizi silemezsiniz.')
+        return redirect('accounts:user_list')
+    if request.method == 'POST':
+        name = user.get_full_name() or user.username
+        user.delete()
+        messages.success(request, f'{name} silindi.')
+        return redirect('accounts:user_list')
+    return render(request, 'accounts/user_confirm_delete.html', {'del_user': user})
+
+
+@login_required
 def user_edit(request, pk):
     if not request.user.is_admin_role:
         messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Kullanıcı Sil — Archeon{% endblock %}
+{% block topbar_title %}Kullanıcı Sil{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Kullanıcıyı Sil</div>
+    <div class="page-subtitle">Bu işlem geri alınamaz</div>
+  </div>
+  <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div style="max-width:480px;">
+  <div class="card">
+    <!-- Kullanıcı özeti -->
+    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--danger-bg);border:1.5px solid var(--danger-border);border-radius:var(--r-md);margin-bottom:22px;">
+      <div class="avatar avatar-danger" style="width:46px;height:46px;font-size:16px;">{{ del_user.initials }}</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--gray-900);">{{ del_user.get_full_name|default:del_user.username }}</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">@{{ del_user.username }} · {{ del_user.get_role_display }}</div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger" style="margin-bottom:20px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Bu kullanıcıya ait tüm <strong>paketler</strong> ve <strong>randevular</strong> da kalıcı olarak silinecek.</span>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <form method="post" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-full">Evet, Sil</button>
+      </form>
+      <a href="{% url 'accounts:user_list' %}" class="btn btn-secondary" style="flex:1;justify-content:center;">İptal</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

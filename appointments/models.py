@@ -37,7 +37,7 @@ class Appointment(models.Model):
     )
     user_package = models.ForeignKey(
         'packages.UserPackage',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='appointments',
         verbose_name='Kullanılan paket'
     )

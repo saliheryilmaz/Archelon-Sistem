@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Paket Sil — Archeon{% endblock %}
+{% block topbar_title %}Paket Sil{% endblock %}
+{% block mobile_cta %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="page-title">Paketi Sil</div>
+    <div class="page-subtitle">Bu işlem geri alınamaz</div>
+  </div>
+  <a href="{% url 'packages:list' %}" class="btn btn-secondary btn-sm">← Geri</a>
+</div>
+
+<div style="max-width:480px;">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:14px;padding:16px;background:var(--danger-bg);border:1.5px solid var(--danger-border);border-radius:var(--r-md);margin-bottom:22px;">
+      <div style="width:46px;height:46px;background:var(--danger);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--gray-900);">{{ pkg.user.get_full_name|default:pkg.user.username }}</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">{{ pkg.package_type.name }} · {{ pkg.remaining_sessions }}/{{ pkg.total_sessions }} seans kaldı</div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger" style="margin-bottom:20px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Bu paket ve bağlı tüm <strong>randevular</strong> kalıcı olarak silinecek.</span>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <form method="post" style="flex:1;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-full">Evet, Sil</button>
+      </form>
+      <a href="{% url 'packages:list' %}" class="btn btn-secondary" style="flex:1;justify-content:center;">İptal</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

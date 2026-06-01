@@ -63,6 +63,18 @@ def edit_package(request, pk):
 
 
 @login_required
+@admin_required
+def delete_package(request, pk):
+    pkg = get_object_or_404(UserPackage, pk=pk)
+    if request.method == 'POST':
+        name = f'{pkg.user.get_full_name()} — {pkg.package_type.name}'
+        pkg.delete()
+        messages.success(request, f'{name} paketi silindi.')
+        return redirect('packages:list')
+    return render(request, 'packages/confirm_delete.html', {'pkg': pkg})
+
+
+@login_required
 def my_packages(request):
     packages = request.user.packages.select_related('package_type').filter(is_active=True)
     return render(request, 'packages/my_packages.html', {'packages': packages})

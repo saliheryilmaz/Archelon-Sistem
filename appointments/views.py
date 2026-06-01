@@ -170,6 +170,20 @@ def instructor_edit(request, pk):
 
 
 @login_required
+def instructor_delete(request, pk):
+    if not request.user.is_admin_role:
+        messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
+        return redirect('dashboard:index')
+    instructor = get_object_or_404(Instructor, pk=pk)
+    if request.method == 'POST':
+        name = instructor.name
+        instructor.delete()
+        messages.success(request, f'{name} silindi.')
+        return redirect('appointments:instructor_list')
+    return render(request, 'appointments/instructor_confirm_delete.html', {'instructor': instructor})
+
+
+@login_required
 def attendance_sheet(request):
     if not request.user.is_admin_role:
         messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')

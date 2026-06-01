@@ -61,6 +61,7 @@
           <td>
             <div style="display:flex;gap:6px;">
               <a href="{% url 'packages:edit' pkg.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+              <a href="{% url 'packages:delete' pkg.pk %}" class="btn btn-danger btn-sm">Sil</a>
               {% if pkg.is_active %}
               <form method="post" action="{% url 'packages:deactivate' pkg.pk %}" onsubmit="return confirm('Bu paketi devre dışı bırakmak istediğinizden emin misiniz?')">
                 {% csrf_token %}
@@ -104,6 +105,7 @@
     {% if pkg.is_active %}
     <div style="display:flex;gap:8px;">
       <a href="{% url 'packages:edit' pkg.pk %}" class="btn btn-secondary btn-sm" style="flex:1;justify-content:center;">Düzenle</a>
+      <a href="{% url 'packages:delete' pkg.pk %}" class="btn btn-danger btn-sm" style="flex:1;justify-content:center;">Sil</a>
       <form method="post" action="{% url 'packages:deactivate' pkg.pk %}" onsubmit="return confirm('Bu paketi devre dışı bırakmak istediğinizden emin misiniz?')" style="flex:1;">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger btn-sm" style="width:100%;">Devre Dışı</button>
@@ -112,6 +114,7 @@
     {% else %}
       <div style="display:flex;gap:8px;align-items:center;">
         <a href="{% url 'packages:edit' pkg.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+        <a href="{% url 'packages:delete' pkg.pk %}" class="btn btn-danger btn-sm">Sil</a>
         <span class="badge badge-danger">Devre dışı</span>
       </div>
     {% endif %}

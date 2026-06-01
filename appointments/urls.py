@@ -11,6 +11,7 @@ urlpatterns = [
     path('egitmenler/', views.instructor_list, name='instructor_list'),
     path('egitmenler/yeni/', views.instructor_create, name='instructor_create'),
     path('egitmenler/<int:pk>/duzenle/', views.instructor_edit, name='instructor_edit'),
+    path('egitmenler/<int:pk>/sil/', views.instructor_delete, name='instructor_delete'),
     path('yoklama/', views.attendance_sheet, name='attendance_sheet'),
     path('yoklama/kaydet/', views.save_attendance, name='save_attendance'),
     path('uye-paketleri/', views.member_packages_json, name='member_packages_json'),

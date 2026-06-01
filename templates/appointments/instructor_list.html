@@ -39,7 +39,10 @@
             </span>
           </td>
           <td>
-            <a href="{% url 'appointments:instructor_edit' instructor.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+            <div style="display:flex;gap:6px;">
+              <a href="{% url 'appointments:instructor_edit' instructor.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+              <a href="{% url 'appointments:instructor_delete' instructor.pk %}" class="btn btn-danger btn-sm">Sil</a>
+            </div>
           </td>
         </tr>
         {% empty %}
@@ -61,7 +64,10 @@
         {% if instructor.is_active %}Aktif{% else %}Pasif{% endif %}
       </span>
     </div>
-    <a href="{% url 'appointments:instructor_edit' instructor.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+    <div style="display:flex;gap:6px;">
+      <a href="{% url 'appointments:instructor_edit' instructor.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
+      <a href="{% url 'appointments:instructor_delete' instructor.pk %}" class="btn btn-danger btn-sm">Sil</a>
+    </div>
   </div>
   {% empty %}
   <div class="card">

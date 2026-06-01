@@ -62,6 +62,7 @@ def edit_package(request, pk):
     return render(request, 'packages/edit.html', {'form': form, 'pkg': pkg})
 
 
-
+@login_required
+def my_packages(request):
     packages = request.user.packages.select_related('package_type').filter(is_active=True)
     return render(request, 'packages/my_packages.html', {'packages': packages})

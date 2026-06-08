@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% block title %}Eğitmen Seans Raporu{% endblock %}
+{% block topbar_title %}Eğitmen Seans Raporu{% endblock %}
+
+{% block content %}
+<style>
+  /* ── Filtre formu ────────────────────────────────── */
+  .rp-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 24px;
+  }
+  .rp-field { display: flex; flex-direction: column; gap: 4px; }
+  .rp-field label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--gray-400, #9ca3af);
+  }
+  .rp-field input,
+  .rp-field select {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--gray-900, #111827);
+    background: #fff;
+    min-width: 155px;
+  }
+  .rp-field input:focus,
+  .rp-field select:focus {
+    outline: 2px solid var(--primary, #0B3D5E);
+    outline-offset: 1px;
+  }
+  .rp-btn {
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    height: 38px;
+  }
+  .rp-btn-primary { background: var(--primary, #0B3D5E); color: #fff; }
+  .rp-btn-ghost {
+    background: #fff;
+    color: var(--gray-500, #6b7280);
+    border: 1px solid var(--gray-200, #e5e7eb);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .rp-btn-ghost:hover { background: var(--gray-50, #f9fafb); }
+
+  /* ── Özet sayaçlar ───────────────────────────────── */
+  .rp-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .rp-stat {
+    background: #fff;
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .rp-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .rp-stat-icon svg { width: 20px; height: 20px; }
+  .icon-total   { background: #f1f5f9; color: #0B3D5E; }
+  .icon-group   { background: #eff6ff; color: #2563eb; }
+  .icon-private { background: #f5f3ff; color: #7c3aed; }
+  .icon-time    { background: #f0fdf4; color: #16a34a; }
+  .rp-stat-body { min-width: 0; }
+  .rp-stat-val {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--gray-900, #111827);
+    white-space: nowrap;
+  }
+  .rp-stat-val small { font-size: 13px; font-weight: 600; color: var(--gray-400, #9ca3af); }
+  .rp-stat-lbl {
+    font-size: 12px;
+    color: var(--gray-400, #9ca3af);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  /* ── Eğitmen kartları ────────────────────────────── */
+  .inst-card {
+    background: #fff;
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .inst-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .inst-header:hover { background: var(--gray-50, #f9fafb); }
+  .inst-initials {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--primary, #0B3D5E);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: .03em;
+  }
+  .inst-header-text { flex: 1; min-width: 0; }
+  .inst-header-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gray-900, #111827);
+  }
+  .inst-header-sub {
+    font-size: 12px;
+    color: var(--gray-400, #9ca3af);
+    margin-top: 1px;
+  }
+  .inst-counts {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ic-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .ic-group   { background: #eff6ff; color: #2563eb; }
+  .ic-private { background: #f5f3ff; color: #7c3aed; }
+  .ic-time    { background: #f0fdf4; color: #16a34a; }
+  .ic-total   { background: #f1f5f9; color: #374151; }
+  .inst-chevron {
+    margin-left: 4px;
+    flex-shrink: 0;
+    color: var(--gray-300, #d1d5db);
+    transition: transform .2s;
+  }
+  .inst-chevron.open { transform: rotate(180deg); }
+
+  /* ── Gün bölümleri ───────────────────────────────── */
+  .inst-body {
+    display: none;
+    border-top: 1px solid var(--gray-100, #f3f4f6);
+  }
+  .inst-body.open { display: block; }
+
+  .day-block { border-bottom: 1px solid var(--gray-100, #f3f4f6); }
+  .day-block:last-child { border-bottom: none; }
+
+  .day-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 18px;
+    background: var(--gray-50, #f9fafb);
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .day-bar-left {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-700, #374151);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .day-bar-left .day-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary, #0B3D5E);
+    flex-shrink: 0;
+  }
+  .day-bar-right {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .day-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+  .dp-group   { background: #eff6ff; color: #2563eb; }
+  .dp-private { background: #f5f3ff; color: #7c3aed; }
+  .dp-time    { background: #f0fdf4; color: #16a34a; }
+
+  /* ── Seans tablosu ───────────────────────────────── */
+  .seans-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .seans-table th {
+    padding: 7px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--gray-400, #9ca3af);
+  }
+  .seans-table td {
+    padding: 9px 14px;
+    border-top: 1px solid var(--gray-100, #f3f4f6);
+    color: var(--gray-700, #374151);
+    vertical-align: middle;
+  }
+  .seans-table tbody tr:hover td { background: var(--gray-50, #f9fafb); }
+  .seans-table .member-name { font-weight: 600; color: var(--gray-900, #111827); }
+  .seans-table .time-cell { font-weight: 600; white-space: nowrap; color: var(--gray-900, #111827); }
+  .seans-table .dur-cell  { color: var(--gray-400, #9ca3af); white-space: nowrap; }
+  .seans-table .pkg-cell  { color: var(--gray-500, #6b7280); font-size: 12px; }
+
+  .type-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .type-dot::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .type-group::before   { background: #2563eb; }
+  .type-private::before { background: #7c3aed; }
+  .type-group   { color: #2563eb; }
+  .type-private { color: #7c3aed; }
+
+  /* ── Boş durum ───────────────────────────────────── */
+  .rp-empty {
+    text-align: center;
+    padding: 56px 20px;
+    color: var(--gray-300, #d1d5db);
+  }
+  .rp-empty svg { width: 44px; height: 44px; margin-bottom: 10px; }
+  .rp-empty p { font-size: 14px; color: var(--gray-400, #9ca3af); margin: 0; }
+
+  @media (max-width: 680px) {
+    .rp-summary { grid-template-columns: repeat(2, 1fr); }
+    .seans-table th:nth-child(4),
+    .seans-table td:nth-child(4) { display: none; }
+    .inst-counts { display: none; }   /* mobilde başlık yeterli */
+  }
+</style>
+
+<!-- ══ Filtre ══════════════════════════════════════════════ -->
+<form method="get" class="rp-filters">
+  <div class="rp-field">
+    <label>Başlangıç</label>
+    <input type="date" name="date_from" value="{{ date_from_str }}" max="{{ today|date:'Y-m-d' }}">
+  </div>
+  <div class="rp-field">
+    <label>Bitiş</label>
+    <input type="date" name="date_to" value="{{ date_to_str }}" max="{{ today|date:'Y-m-d' }}">
+  </div>
+  <div class="rp-field">
+    <label>Eğitmen</label>
+    <select name="instructor">
+      <option value="">Tümü</option>
+      {% for inst in instructors %}
+        <option value="{{ inst.pk }}" {% if selected_instructor_id == inst.pk|stringformat:'s' %}selected{% endif %}>{{ inst.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="rp-btn rp-btn-primary">Filtrele</button>
+  <a href="{% url 'appointments:instructor_report' %}" class="rp-btn rp-btn-ghost">Temizle</a>
+</form>
+
+<!-- ══ Özet kartlar ════════════════════════════════════════ -->
+<div class="rp-summary">
+  <div class="rp-stat">
+    <div class="rp-stat-icon icon-total">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <div class="rp-stat-body">
+      <div class="rp-stat-val">{{ grand_total }}</div>
+      <div class="rp-stat-lbl">Toplam Seans</div>
+    </div>
+  </div>
+  <div class="rp-stat">
+    <div class="rp-stat-icon icon-group">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+    </div>
+    <div class="rp-stat-body">
+      <div class="rp-stat-val">{{ grand_group }}</div>
+      <div class="rp-stat-lbl">Kursiyer</div>
+    </div>
+  </div>
+  <div class="rp-stat">
+    <div class="rp-stat-icon icon-private">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="rp-stat-body">
+      <div class="rp-stat-val">{{ grand_private }}</div>
+      <div class="rp-stat-lbl">Özel Ders</div>
+    </div>
+  </div>
+  <div class="rp-stat">
+    <div class="rp-stat-icon icon-time">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="rp-stat-body">
+      <div class="rp-stat-val">{{ grand_hours }}<small>s {{ grand_mins_rem }}dk</small></div>
+      <div class="rp-stat-lbl">Toplam Süre</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Eğitmen listesi ═════════════════════════════════════ -->
+{% if instructor_stats %}
+  {% for stat in instructor_stats %}
+  <div class="inst-card">
+
+    <!-- Başlık -->
+    <div class="inst-header" onclick="toggleInst({{ forloop.counter }})">
+      <div class="inst-initials">{{ stat.instructor.name|slice:':2'|upper }}</div>
+      <div class="inst-header-text">
+        <div class="inst-header-name">{{ stat.instructor.name }}</div>
+        <div class="inst-header-sub">{{ stat.total_count }} seans · {{ stat.total_hours }}s {{ stat.total_mins_rem }}dk</div>
+      </div>
+      <div class="inst-counts">
+        <span class="ic-pill ic-group">{{ stat.group_count }} Kursiyer</span>
+        <span class="ic-pill ic-private">{{ stat.private_count }} Özel</span>
+        <span class="ic-pill ic-time">{{ stat.total_hours }}s {{ stat.total_mins_rem }}dk</span>
+      </div>
+      <svg class="inst-chevron" id="chev-{{ forloop.counter }}" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- Gün detayları -->
+    <div class="inst-body" id="body-{{ forloop.counter }}">
+      {% for day in stat.daily_detail %}
+      <div class="day-block">
+
+        <!-- Gün başlığı -->
+        <div class="day-bar">
+          <div class="day-bar-left">
+            <span class="day-dot"></span>
+            {{ day.date|date:'d F Y' }}
+            <span style="font-weight:400;color:var(--gray-400,#9ca3af);">{{ day.date|date:'l' }}</span>
+          </div>
+          <div class="day-bar-right">
+            {% if day.group_count %}
+              <span class="day-pill dp-group">{{ day.group_count }} kursiyer</span>
+            {% endif %}
+            {% if day.private_count %}
+              <span class="day-pill dp-private">{{ day.private_count }} özel</span>
+            {% endif %}
+            <span class="day-pill dp-time">{% if day.hours %}{{ day.hours }}s {% endif %}{{ day.mins_rem }}dk</span>
+          </div>
+        </div>
+
+        <!-- Seans satırları -->
+        <table class="seans-table">
+          <thead>
+            <tr>
+              <th>Üye</th>
+              <th>Saat</th>
+              <th>Süre</th>
+              <th>Paket</th>
+              <th>Tür</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in day.appointments %}
+            <tr>
+              <td class="member-name">{{ row.appt.user.get_full_name|default:row.appt.user.username }}</td>
+              <td class="time-cell">{{ row.appt.start_time|time:'H:i' }} – {{ row.appt.end_time|time:'H:i' }}</td>
+              <td class="dur-cell">{{ row.duration_min }}dk</td>
+              <td class="pkg-cell">{{ row.appt.user_package.package_type.name }}</td>
+              <td>
+                {% if row.is_private %}
+                  <span class="type-dot type-private">Özel</span>
+                {% else %}
+                  <span class="type-dot type-group">Kursiyer</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+      {% empty %}
+        <div style="padding:18px 18px;color:var(--gray-400,#9ca3af);font-size:13px;">
+          Bu aralıkta seans bulunamadı.
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="inst-card rp-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <p>Seçili kriterlere göre seans kaydı bulunamadı.</p>
+  </div>
+{% endif %}
+
+<script>
+function toggleInst(id) {
+  var body = document.getElementById('body-' + id);
+  var chev = document.getElementById('chev-' + id);
+  var open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+</script>
+{% endblock %}

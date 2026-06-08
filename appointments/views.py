@@ -270,6 +270,153 @@ def save_attendance(request):
 
 
 @login_required
+def instructor_report(request):
+    """Eğitmen bazlı seans raporu: kursiyer / özel ders ayrımı, günlük saat detayı."""
+    if not request.user.is_admin_role:
+        messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
+        return redirect('dashboard:index')
+
+    from datetime import date, timedelta
+    from django.db.models import Count, Q
+    from django.db.models.functions import TruncDate
+    import datetime as dt
+
+    # Tarih filtresi
+    date_from_str = request.GET.get('date_from', '')
+    date_to_str = request.GET.get('date_to', '')
+    instructor_id = request.GET.get('instructor', '')
+
+    today = timezone.now().date()
+    date_from = None
+    date_to = None
+
+    if date_from_str:
+        try:
+            date_from = date.fromisoformat(date_from_str)
+        except ValueError:
+            date_from = None
+    if date_to_str:
+        try:
+            date_to = date.fromisoformat(date_to_str)
+        except ValueError:
+            date_to = None
+
+    instructors = Instructor.objects.all()
+
+    # Temel queryset: iptal edilmemiş randevular
+    base_qs = Appointment.objects.filter(
+        status__in=[Appointment.STATUS_CONFIRMED, Appointment.STATUS_COMPLETED]
+    ).select_related('instructor', 'user', 'user_package__package_type')
+
+    if date_from:
+        base_qs = base_qs.filter(date__gte=date_from)
+    if date_to:
+        base_qs = base_qs.filter(date__lte=date_to)
+    if instructor_id:
+        base_qs = base_qs.filter(instructor_id=instructor_id)
+
+    # Kursiyer slug'ları (özel ders DEĞİL olanlar)
+    OZEL_SLUG = 'ozel_ders'
+
+    # Eğitmen bazlı istatistikler
+    instructor_stats = []
+    for inst in instructors:
+        inst_qs = base_qs.filter(instructor=inst)
+
+        group_qs = inst_qs.filter(~Q(user_package__package_type__slug=OZEL_SLUG))
+        private_qs = inst_qs.filter(user_package__package_type__slug=OZEL_SLUG)
+
+        group_count = group_qs.count()
+        private_count = private_qs.count()
+        total_count = group_count + private_count
+
+        if total_count == 0 and not instructor_id:
+            continue  # Hiç seans yoksa listeleme (filtre yokken)
+
+        # Toplam saat hesapla
+        total_minutes = 0
+        for appt in inst_qs:
+            start_dt = dt.datetime.combine(appt.date, appt.start_time)
+            end_dt = dt.datetime.combine(appt.date, appt.end_time)
+            diff = (end_dt - start_dt).seconds // 60
+            total_minutes += diff
+
+        # Günlük detay
+        daily_detail = {}
+        for appt in inst_qs.order_by('date', 'start_time'):
+            day = appt.date
+            if day not in daily_detail:
+                daily_detail[day] = {
+                    'date': day,
+                    'appointments': [],
+                    'group_count': 0,
+                    'private_count': 0,
+                    'total_minutes': 0,
+                }
+            is_private = appt.user_package.package_type.slug == OZEL_SLUG
+            start_dt = dt.datetime.combine(appt.date, appt.start_time)
+            end_dt = dt.datetime.combine(appt.date, appt.end_time)
+            duration = (end_dt - start_dt).seconds // 60
+            daily_detail[day]['appointments'].append({
+                'appt': appt,
+                'is_private': is_private,
+                'duration_min': duration,
+            })
+            daily_detail[day]['total_minutes'] += duration
+            if is_private:
+                daily_detail[day]['private_count'] += 1
+            else:
+                daily_detail[day]['group_count'] += 1
+
+        # Günlük saat/dakika formatla
+        for d in daily_detail.values():
+            d['hours'] = d['total_minutes'] // 60
+            d['mins_rem'] = d['total_minutes'] % 60
+
+        instructor_stats.append({
+            'instructor': inst,
+            'group_count': group_count,
+            'private_count': private_count,
+            'total_count': total_count,
+            'total_minutes': total_minutes,
+            'total_hours': total_minutes // 60,
+            'total_mins_rem': total_minutes % 60,
+            'daily_detail': sorted(daily_detail.values(), key=lambda x: x['date']),
+        })
+
+    # Toplam özet
+    grand_group = sum(s['group_count'] for s in instructor_stats)
+    grand_private = sum(s['private_count'] for s in instructor_stats)
+    grand_total = grand_group + grand_private
+    grand_minutes = sum(s['total_minutes'] for s in instructor_stats)
+
+    selected_instructor = None
+    if instructor_id:
+        try:
+            selected_instructor = Instructor.objects.get(pk=instructor_id)
+        except Instructor.DoesNotExist:
+            pass
+
+    return render(request, 'appointments/instructor_report.html', {
+        'instructor_stats': instructor_stats,
+        'instructors': instructors,
+        'date_from': date_from,
+        'date_to': date_to,
+        'date_from_str': date_from_str,
+        'date_to_str': date_to_str,
+        'selected_instructor': selected_instructor,
+        'selected_instructor_id': instructor_id,
+        'grand_group': grand_group,
+        'grand_private': grand_private,
+        'grand_total': grand_total,
+        'grand_minutes': grand_minutes,
+        'grand_hours': grand_minutes // 60,
+        'grand_mins_rem': grand_minutes % 60,
+        'today': today,
+    })
+
+
+@login_required
 def member_packages_json(request):
     from django.http import JsonResponse
     from packages.models import UserPackage

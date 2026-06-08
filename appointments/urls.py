@@ -15,4 +15,5 @@ urlpatterns = [
     path('yoklama/', views.attendance_sheet, name='attendance_sheet'),
     path('yoklama/kaydet/', views.save_attendance, name='save_attendance'),
     path('uye-paketleri/', views.member_packages_json, name='member_packages_json'),
+    path('egitmen-raporu/', views.instructor_report, name='instructor_report'),
 ]

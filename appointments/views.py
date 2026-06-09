@@ -326,52 +326,76 @@ def instructor_report(request):
         group_qs = inst_qs.filter(~Q(user_package__package_type__slug=OZEL_SLUG))
         private_qs = inst_qs.filter(user_package__package_type__slug=OZEL_SLUG)
 
-        group_count = group_qs.count()
-        private_count = private_qs.count()
-        total_count = group_count + private_count
+        # Seans sayısı = benzersiz (tarih, başlangıç, bitiş) dilimi sayısı
+        group_slots = set(
+            group_qs.values_list('date', 'start_time', 'end_time').distinct()
+        )
+        private_slots = set(
+            private_qs.values_list('date', 'start_time', 'end_time').distinct()
+        )
+        group_count   = len(group_slots)
+        private_count = len(private_slots)
+        total_count   = group_count + private_count
 
         if total_count == 0 and not instructor_id:
             continue  # Hiç seans yoksa listeleme (filtre yokken)
 
-        # Toplam saat hesapla
+        # Toplam saat hesapla — aynı (start, end) dilimi bir kez sayılır
         total_minutes = 0
+        seen_slots = set()
         for appt in inst_qs:
-            start_dt = dt.datetime.combine(appt.date, appt.start_time)
-            end_dt = dt.datetime.combine(appt.date, appt.end_time)
-            diff = (end_dt - start_dt).seconds // 60
-            total_minutes += diff
+            slot = (appt.date, appt.start_time, appt.end_time)
+            if slot not in seen_slots:
+                seen_slots.add(slot)
+                start_dt = dt.datetime.combine(appt.date, appt.start_time)
+                end_dt   = dt.datetime.combine(appt.date, appt.end_time)
+                total_minutes += (end_dt - start_dt).seconds // 60
 
-        # Günlük detay
+        # Günlük detay — her gün için zaman dilimlerine göre gruplama
+        # Yapı: daily_detail[date][slot_key] = { slot bilgisi + üye listesi }
         daily_detail = {}
         for appt in inst_qs.order_by('date', 'start_time'):
-            day = appt.date
+            day  = appt.date
+            slot = (appt.start_time, appt.end_time)
+            is_private = appt.user_package.package_type.slug == OZEL_SLUG
+
             if day not in daily_detail:
                 daily_detail[day] = {
                     'date': day,
-                    'appointments': [],
+                    'slots': {},          # slot_key -> slot dict
                     'group_count': 0,
                     'private_count': 0,
                     'total_minutes': 0,
                 }
-            is_private = appt.user_package.package_type.slug == OZEL_SLUG
-            start_dt = dt.datetime.combine(appt.date, appt.start_time)
-            end_dt = dt.datetime.combine(appt.date, appt.end_time)
-            duration = (end_dt - start_dt).seconds // 60
-            daily_detail[day]['appointments'].append({
+
+            if slot not in daily_detail[day]['slots']:
+                start_dt = dt.datetime.combine(appt.date, appt.start_time)
+                end_dt   = dt.datetime.combine(appt.date, appt.end_time)
+                duration = (end_dt - start_dt).seconds // 60
+                daily_detail[day]['slots'][slot] = {
+                    'start_time': appt.start_time,
+                    'end_time':   appt.end_time,
+                    'duration_min': duration,
+                    'appointments': [],
+                    'is_private': is_private,   # slot geneli için (karışık olabilir)
+                }
+                daily_detail[day]['total_minutes'] += duration
+
+            daily_detail[day]['slots'][slot]['appointments'].append({
                 'appt': appt,
                 'is_private': is_private,
-                'duration_min': duration,
             })
-            daily_detail[day]['total_minutes'] += duration
+
             if is_private:
                 daily_detail[day]['private_count'] += 1
             else:
                 daily_detail[day]['group_count'] += 1
 
-        # Günlük saat/dakika formatla
+        # Günlük saat/dakika formatla + slots listesi sırala
         for d in daily_detail.values():
-            d['hours'] = d['total_minutes'] // 60
+            d['hours']    = d['total_minutes'] // 60
             d['mins_rem'] = d['total_minutes'] % 60
+            d['slot_list'] = sorted(d['slots'].values(), key=lambda s: s['start_time'])
 
         instructor_stats.append({
             'instructor': inst,

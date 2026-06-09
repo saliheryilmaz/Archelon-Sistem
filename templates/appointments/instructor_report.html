@@ -379,7 +379,7 @@
           </div>
           <div class="day-bar-right">
             {% if day.group_count %}
-              <span class="day-pill dp-group">{{ day.group_count }} kursiyer</span>
+              <span class="day-pill dp-group">{{ day.group_count }} kursiyer seansı</span>
             {% endif %}
             {% if day.private_count %}
               <span class="day-pill dp-private">{{ day.private_count }} özel</span>
@@ -388,35 +388,50 @@
           </div>
         </div>
 
-        <!-- Seans satırları -->
-        <table class="seans-table">
-          <thead>
-            <tr>
-              <th>Üye</th>
-              <th>Saat</th>
-              <th>Süre</th>
-              <th>Paket</th>
-              <th>Tür</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in day.appointments %}
-            <tr>
-              <td class="member-name">{{ row.appt.user.get_full_name|default:row.appt.user.username }}</td>
-              <td class="time-cell">{{ row.appt.start_time|time:'H:i' }} – {{ row.appt.end_time|time:'H:i' }}</td>
-              <td class="dur-cell">{{ row.duration_min }}dk</td>
-              <td class="pkg-cell">{{ row.appt.user_package.package_type.name }}</td>
-              <td>
-                {% if row.is_private %}
-                  <span class="type-dot type-private">Özel</span>
-                {% else %}
-                  <span class="type-dot type-group">Kursiyer</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <!-- Seans dilimleri (aynı saattekiler gruplanır) -->
+        {% for slot in day.slot_list %}
+        <div style="border-top:1px solid var(--gray-100,#f3f4f6);">
+          <!-- Dilim başlık şeridi -->
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 18px;background:var(--gray-50,#f9fafb);">
+            <span style="font-size:13px;font-weight:700;color:var(--gray-900,#111827);">
+              {{ slot.start_time|time:'H:i' }} – {{ slot.end_time|time:'H:i' }}
+            </span>
+            <span style="font-size:12px;color:var(--gray-400,#9ca3af);">{{ slot.duration_min }}dk</span>
+            <span style="font-size:12px;color:var(--gray-300,#d1d5db);">·</span>
+            <span style="font-size:12px;color:var(--gray-500,#6b7280);">{{ slot.appointments|length }} kişi</span>
+            {% if slot.is_private %}
+              <span class="day-pill dp-private" style="margin-left:2px;">Özel</span>
+            {% else %}
+              <span class="day-pill dp-group" style="margin-left:2px;">Kursiyer</span>
+            {% endif %}
+          </div>
+          <!-- O dilimdeki üyeler -->
+          <table class="seans-table">
+            <thead>
+              <tr>
+                <th>Üye</th>
+                <th>Paket</th>
+                <th>Tür</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in slot.appointments %}
+              <tr>
+                <td class="member-name">{{ row.appt.user.get_full_name|default:row.appt.user.username }}</td>
+                <td class="pkg-cell">{{ row.appt.user_package.package_type.name }}</td>
+                <td>
+                  {% if row.is_private %}
+                    <span class="type-dot type-private">Özel</span>
+                  {% else %}
+                    <span class="type-dot type-group">Kursiyer</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endfor %}
 
       </div>
       {% empty %}

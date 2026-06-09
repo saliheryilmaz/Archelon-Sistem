@@ -66,6 +66,7 @@
           </td>
           <td>
             <div style="display:flex;gap:6px;">
+              <a href="{% url 'accounts:user_report' u.pk %}" class="btn btn-secondary btn-sm">Karne</a>
               <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
               <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-danger btn-sm">Sil</a>
             </div>
@@ -94,6 +95,7 @@
         <span class="badge badge-{% if u.role == 'admin' %}info{% elif u.role == 'instructor' %}success{% else %}warning{% endif %}">{{ u.get_role_display }}</span>
         {% if u.swim_level %}<span style="font-size:11px;color:var(--gray-500);">Seviye {{ u.swim_level }}/10</span>{% endif %}
         <div style="display:flex;gap:6px;margin-top:2px;">
+          <a href="{% url 'accounts:user_report' u.pk %}" class="btn btn-secondary btn-sm">Karne</a>
           <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-secondary btn-sm">Düzenle</a>
           <a href="{% url 'accounts:user_delete' u.pk %}" class="btn btn-danger btn-sm">Sil</a>
         </div>
